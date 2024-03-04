@@ -3,31 +3,34 @@ import wallet
 
 class node:
     def __init__(self):
-        self.NBC=100;
-        #set
-        
-        #self.chain
-        #self.current_id_count
-        #self.NBCs
-        #self.wallet
-
-        #self.ring[] here we store info for every node, as its id, its address (ip:port), its public  key and its balance
-
+        self.NBC=0
+        self.chain=[]
+        self.id = None
+        self.wallet = self.create_wallet()
+        #ring: here we store info for every node, as its id, its address (ip:port), its public  key and its balance
+        self.ring = []
 
     def create_new_block():
+        pass
 
-    def create_wallet():
+    def create_wallet(self):
         #create a wallet for this node, with a public key and a private key
+        return wallet.Wallet()
+        
 
-    def register_node_to_ring():
+    def register_node_to_ring(self, id, ip, public_key, balance):
         #add this node to the ring, only the bootstrap node can add a node to the ring after checking its wallet and ip:port address
         #bootstrap node informs all other nodes and gives the request node an id and 100NBCs.
+        #check if node is bootstrap
+        if ()
+
 
     def create_transaction(sender, receiver, signature):
         #remember to broadcast it
     
     def broadcast_transaction():
 
+    def verify_signature():
 
     def validate_transaction():
         #use of signature and NBCs balance

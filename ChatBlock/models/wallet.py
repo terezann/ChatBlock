@@ -15,12 +15,12 @@ class Wallet:
         random_generator = Random.new().read
         key = RSA.generate(1024, random_generator)
 
-        private_key = key.exportKey(format='DER')
-        public_key = key.publickey().exportKey(format='DER')
+        private_key = key 
+        public_key = key.publickey()
 
         response = {
-            'private_key': key, #hexlify(private_key).decode('ascii'),
-            'address': hexlify(public_key).decode('ascii'),
+            'private_key': private_key,
+            'address': public_key
         }
         
         return response
