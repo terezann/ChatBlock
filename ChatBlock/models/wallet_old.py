@@ -9,7 +9,6 @@ from Crypto.Signature import PKCS1_v1_5
 
 class Wallet:
     def __init__(self):
-        self.i = 0
 
     def new_wallet(self):
         random_generator = Random.new().read
@@ -19,7 +18,7 @@ class Wallet:
         public_key = key.publickey().exportKey(format='DER')
 
         response = {
-            'private_key': key, #hexlify(private_key).decode('ascii'),
+            'private_key': hexlify(private_key).decode('ascii'),
             'address': hexlify(public_key).decode('ascii'),
         }
         
