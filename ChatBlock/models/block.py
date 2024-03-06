@@ -21,6 +21,7 @@ class Block:
         #self.listofTransactions
         self.list_of_transactions = []
         self.validator = validator
+        self.capacity = capacity
         
 
     def to_dict(self):
