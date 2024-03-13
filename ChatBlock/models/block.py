@@ -9,19 +9,18 @@ from Crypto.Hash import SHA
 capacity = 5
 
 class Block:
-    def __init__(self, index, validator, previous_hash):
+    def __init__(self, index, validator, previous_hash, transactions):
         ##set
         self.index = index
         #self.previousHash
         self.previous_hash = previous_hash
         #self.timestamp
-        self.timestamp = date.datetime.now()
-        #self.hash
-        self.hash = None 
+        self.timestamp = date.datetime.now() 
         #self.listofTransactions
-        self.list_of_transactions = []
+        self.list_of_transactions = transactions
         self.validator = validator
         self.capacity = capacity
+        self.hash = self.myHash()
         
 
     def to_dict(self):
@@ -35,16 +34,16 @@ class Block:
 
     def myHash(self):
         #calculate self.hash
-        self.hash = SHA.new(str(self.to_dict).encode("utf-8")).hexdigest()
+        return SHA.new(str(self.to_dict).encode("utf-8")).hexdigest()
     
-    def add_transaction(self, transaction): #add a blockchain parameter
-        #add a transaction to the block
-        if len(self.list_of_transactions) == capacity:
-            print("the max capacity is reached: ", capacity)
-            return
-        self.list_of_transactions.append(transaction)
-        if len(self.list_of_transactions) == capacity:
-            self.myHash()
+    # def add_transaction(self, transaction): #add a blockchain parameter
+    #     #add a transaction to the block
+    #     if len(self.list_of_transactions) == capacity:
+    #         print("the max capacity is reached: ", capacity)
+    #         return
+    #     self.list_of_transactions.append(transaction)
+    #     if len(self.list_of_transactions) == capacity:
+    #         self.myHash()
 
 my_wallet = wallet.Wallet()
 key = my_wallet.new_wallet()['private_key']

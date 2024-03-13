@@ -1,5 +1,8 @@
 import block
 import wallet
+import random
+
+capacity = block.capacity
 
 class node:
     def __init__(self, is_boot):
@@ -10,16 +13,36 @@ class node:
         self.wallet = self.create_wallet()
         #ring: here we store info for every node, as its id, its address (ip:port), its public  key and its balance
         self.ring = []
+        self.transactions = []
+        self.stakes = []
         
     def set_id(self):
         if self.is_boot:
             return 0
         else: return None
          
-    def create_new_block(self):
+    def POS(self, seed):
+        lottery_players = []
+        for player, stake in enumerate(self.stakes):
+            for i in range(stake):
+                lottery_players.append(player)
+        lottery_sum = self.stakes.sum()
+        random.seed(seed)
+        winner = random.randint(0, lottery_sum)
+        validator = lottery_players[winner]
+        return validator
+
+    def mine_block(self):
         last_block = self.blockchain[-1]
         previous_hash = last_block.hash
+        seed = previous_hash
         index = last_block.index + 1
+        validator = self.POS(seed)
+        if (validator == self.id):
+            myblock = block.Block(index, validator, previous_hash, self.transactions.copy())
+            self.blockchain.append(myblock)
+            self.broadcast_block(myblock)
+        self.transactions = []
 
 
     def create_wallet(self):
@@ -51,10 +74,11 @@ class node:
     def validate_transaction():
         #use of signature and NBCs balance
 
-    def add_transaction_to_block():
-        #if enough transactions, mine
 
-    def mine_block():
+    def add_transaction_to_block(self):
+        #if enough transactions, mine
+        if len(self.transactions) == capacity:
+            self.mine_block()
 
     def broadcast_block():
 
