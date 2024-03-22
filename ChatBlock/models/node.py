@@ -24,6 +24,12 @@ class Node:
         if self.is_boot:
             return 0
         else: return None
+
+    def create_genesis(self):
+        pass #broadcast_block
+
+    def send_info(self):
+        pass
          
     def POS(self, seed):
         lottery_players = []
@@ -126,7 +132,19 @@ class Node:
         
     #consensus functions
 
-    def valid_chain(self, chain):
+    def validate_block(self, block):
+        last_block = self.blockchain[-1]
+        previous_hash = last_block.hash
+        validator = self.POS(previous_hash)
+
+        validator_correct = (validator == block.validator)
+        hash_correct = (previous_hash == block.previous_hash)
+
+        if validator_correct and hash_correct:
+            self.blockchain.append(block)
+    
+
+    def validate_chain(self, chain):
         pass
         #check for the longer chain across all nodes
         
