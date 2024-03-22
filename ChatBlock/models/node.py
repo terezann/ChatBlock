@@ -1,12 +1,14 @@
 import block
 import wallet
 import random
+import transaction
+
+from Crypto.Signature import PKCS1_v1_5
 
 capacity = block.capacity
 
-class node:
-    def __init__(self, is_boot):
-        self.NBC=0
+class Node:
+    def __init__(self, is_boot = False):
         self.blockchain=[]
         self.is_boot = is_boot
         self.id = self.set_id()
@@ -15,6 +17,8 @@ class node:
         self.ring = []
         self.transactions = []
         self.stakes = []
+        self.balances = []
+        self.nonces = []
         
     def set_id(self):
         if self.is_boot:
@@ -50,7 +54,7 @@ class node:
         return wallet.Wallet().new_wallet()
         
 
-    def register_node_to_ring(self, id, ip, public_key): #extra arg: balance
+    def register_node(self, id, ip, public_key, balance, stake):
         #add this node to the ring, only the bootstrap node can add a node to the ring after checking its wallet and ip:port address
         #bootstrap node informs all other nodes and gives the request node an id and 100NBCs.
         if self.id != 0: #if I am not the bootstrap
@@ -60,32 +64,75 @@ class node:
         #add the node
         self.ring.append({'id' : id,
                           'ip' : ip,
-                          'public_key' : public_key,
+                          'address' : public_key,
                           #'balance' : balance
                         })
+        self.balances.append(balance)
+        self.stakes.append(stake)
+        self.nonces.append(0)
 
-    def create_transaction(sender, receiver, signature):
+    def create_transaction(self, receiver_address, value):
+        my_transaction = transaction.Transaction(
+            self.wallet['address'], 
+            self.wallet['private_key'], 
+            receiver_address, 
+            value,
+            'money', 
+            self.nonces[self.id])
         #remember to broadcast it
-    
-    def broadcast_transaction():
+        #self.nonces[self.id] += 1
+        self.broadcast_transaction(my_transaction)
+        return my_transaction
 
-    def verify_signature():
+    def verify_signature(self, sender_address, hash, signature):
+        verifier = PKCS1_v1_5.new(sender_address)
+        verification = verifier.verify(hash, signature)
+        return verification
 
-    def validate_transaction():
+    def validate_transaction(self, transaction:transaction.Transaction):
         #use of signature and NBCs balance
+        #verify_sign
+        #check the balance, do not forget stakes
+        isVerify = self.verify_signature(transaction.sender_address, transaction.hash, transaction.signature)
+        #!!!money (add later messages)
+        sender_id = [r['id'] for r in self.ring if r['address'] == transaction.sender_address][0]
+        receiver_id = [r['id'] for r in self.ring if r['address'] == transaction.receiver_address][0]
+        sender_balance = self.balances[sender_id]
+        enough_money = (sender_balance - transaction.amount) >= 0
+        #check nonce
+        noncesOk = self.nonces[sender_id] == transaction.nonce
+        combo = isVerify and enough_money and noncesOk
+        #allazei to nohma
+        if combo:
+            self.nonces[sender_id] += 1
+            self.balances[sender_id] -= transaction.amount
+            self.balances[receiver_id] += transaction.amount
+            self.transactions.append(transaction)
+            if len(self.transactions) == capacity:
+                self.mine_block()
 
+        return combo
+            
 
-    def add_transaction_to_block(self):
-        #if enough transactions, mine
-        if len(self.transactions) == capacity:
-            self.mine_block()
+    # def add_transaction_to_block(self):
+        
+    def broadcast_transaction(self, transaction):
+        return
+    
+    def broadcast_block(self):
+        pass
 
-    def broadcast_block():
-
-    def valid_proof(.., difficulty: MINING_DIFFICULTY):
-
+#    def valid_proof(.., difficulty: MINING_DIFFICULTY):
+        
     #consensus functions
 
     def valid_chain(self, chain):
+        pass
         #check for the longer chain across all nodes
         
+my_node1 = Node()
+my_node2 = Node()
+my_node_baddie = Node()
+my_transaction = my_node1.create_transaction(my_node2.wallet['address'], 10)
+verification = my_node2.verify_signature(my_node_baddie.wallet['address'], my_transaction.hash, my_transaction.signature)
+print(verification)

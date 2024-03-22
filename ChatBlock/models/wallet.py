@@ -15,7 +15,7 @@ class Wallet:
         random_generator = Random.new().read
         key = RSA.generate(1024, random_generator)
 
-        private_key = key 
+        private_key = key
         public_key = key.publickey()
 
         response = {

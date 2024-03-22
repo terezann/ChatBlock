@@ -45,14 +45,4 @@ class Block:
     #     if len(self.list_of_transactions) == capacity:
     #         self.myHash()
 
-my_wallet = wallet.Wallet()
-key = my_wallet.new_wallet()['private_key']
-
-my_transaction = Transaction(1, key, 2, 6, 'blue', 3)
-
-my_block = Block(1, 2, 4)
-
-for i in range(4):
-    my_block.add_transaction(my_transaction)
-
-print(my_block.hash)
+    
