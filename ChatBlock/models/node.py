@@ -2,6 +2,10 @@ import block
 import wallet
 import random
 import transaction
+import socket
+import pickle
+import threading
+import time
 
 from Crypto.Signature import PKCS1_v1_5
 
@@ -24,9 +28,6 @@ class Node:
         if self.is_boot:
             return 0
         else: return None
-
-    def create_genesis(self):
-        pass #broadcast_block
 
     def send_info(self):
         pass
@@ -170,6 +171,75 @@ class Node:
         self.blockchain.append(chain[0])  # add genesis block to blockchain
         for block in chain[1:]:
             self.validate_block(block)
+
+    ####### Ola poutana #######
+
+    def start_listener(self):
+        server_address = (self.ip, self.port)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(server_address)
+            sock.listen()
+            print(f"Node {self.id} listening on {server_address}")
+            while True:
+                connection, client_address = sock.accept()
+                try:
+                    data = b""
+                    while True:
+                        chunk = connection.recv(4096)
+                        if not chunk:
+                            break
+                        data += chunk
+                    self.handle_received_data(data)
+                except Exception as e:
+                    print(f"Error handling data from {client_address}: {e}")
+                finally:
+                    connection.close()
+
+    def handle_received_data(self, data):
+        received_message = pickle.loads(data)
+        message_type = received_message[0]
+        received_object = received_message[1]
+
+        if message_type == 'address':
+            print("Address: ", received_object)
+
+        return
+
+        if isinstance(received_object, transaction.Transaction):
+            print(f"Node {self.id} received transaction from Node {received_object.sender_id}: "
+                  f"Sender: {received_object.sender_id}, Receiver: {received_object.receiver_id}, "
+                  f"Amount: {received_object.amount}")
+        else:
+            print(f"Node {self.id} received unrecognized data")
+
+    def broadcast_transaction(self, transaction):
+        threads = []
+        for node_info in self.ring:
+            thread = threading.Thread(target=self.send_transaction, args=(node_info, transaction))
+            thread.start()
+            threads.append(thread)
+        for thread in threads:
+            thread.join()
+
+    def send_transaction(self, node_info, transaction):
+        print("HERE")
+        node_address = (node_info['ip'], node_info['port'])
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect(node_address)
+                serialized_transaction = pickle.dumps(transaction)
+                sock.sendall(serialized_transaction)
+        except Exception as e:
+            print(f"Error sending transaction to {node_address}: {e}")
+
+    def send_wallet_address_to_bootstrap(self, bootstrap_address):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect(bootstrap_address)
+                serialized_wallet_address = pickle.dumps(('address', self.wallet['address']))
+                sock.sendall(serialized_wallet_address)
+        except Exception as e:
+            print(f"Error sending wallet address to bootstrap node at {bootstrap_address}: {e}")
         
 """
 my_node1 = Node()
@@ -179,3 +249,29 @@ my_transaction = my_node1.create_transaction(my_node2.wallet['address'], 10)
 verification = my_node2.verify_signature(my_node_baddie.wallet['address'], my_transaction.hash, my_transaction.signature)
 print(verification)
 """
+n = 10
+
+
+# Assuming the bootstrap node's address is known
+bootstrap_address = ('localhost', 5000)  # Update with the actual address of the bootstrap node
+
+# Create the bootstrap node
+bootstrap_node = Node(is_boot=True)
+bootstrap_node.register_node(bootstrap_node.id, 1, bootstrap_node.wallet['address'], 0, 0)
+
+# Create the blockchain and genesis block
+bootstrap_node.create_genesis_block(n)
+
+# Start listener for bootstrap node
+threading.Thread(target=bootstrap_node.start_listener).start()
+
+# Create 9 more nodes and register them with the bootstrap node
+nodes = []
+for i in range(1, 10):
+    node = Node(is_boot=False)
+    nodes.append(node)
+    # Start listener for non-bootstrap nodes
+    threading.Thread(target=node.start_listener).start()
+
+    # Send wallet address to bootstrap node
+    threading.Thread(target=node.send_wallet_address_to_bootstrap, args=(bootstrap_address,)).start()
