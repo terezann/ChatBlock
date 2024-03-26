@@ -36,7 +36,8 @@ class Node:
         for player, stake in enumerate(self.stakes):
             for i in range(stake):
                 lottery_players.append(player)
-        lottery_sum = self.stakes.sum()
+        ###lottery_sum = self.stakes.sum()
+        lottery_sum = sum(self.stakes)
         random.seed(seed)
         winner = random.randint(0, lottery_sum)
         validator = lottery_players[winner]
@@ -48,12 +49,12 @@ class Node:
         seed = previous_hash
         index = last_block.index + 1
         validator = self.POS(seed)
+        print(validator)
         if (validator == self.id):
             myblock = block.Block(index, validator, previous_hash, self.transactions.copy())
             self.blockchain.append(myblock)
             self.broadcast_block(myblock)
         self.transactions = []
-
 
     def create_wallet(self):
         #create a wallet for this node, with a public key and a private key
@@ -118,15 +119,36 @@ class Node:
                 self.mine_block()
 
         return combo
+    
+    # Create genesis block
+    def create_genesis_block(self, n):
+        if(self.id != 0):
+            return
+        # Create the first block (genesis block)
+        # Customize as per your requirements
+        #myblock = block.Block(index, validator, previous_hash, self.transactions.copy())
+        genesis_block = block.Block(0, 0, 1, [self.create_transaction(0, 1000*n)])
+        self.blockchain.append(genesis_block)
+
+    # Create new block
+    def create_new_block(self, data):
+        # Create a new block and add it to the chain
+        previous_block = self.chain[-1]
+        new_index = previous_block.index + 1
+        new_timestamp = time.time()
+        new_hash = self.calculate_hash(new_index, previous_block.hash, new_timestamp, data)
+        new_block = Block(new_index, previous_block.hash, new_timestamp, data, new_hash)
+        return new_block
             
 
     # def add_transaction_to_block(self):
         
     def broadcast_transaction(self, transaction):
         return
-    
-    def broadcast_block(self):
-        pass
+
+    def broadcast_block(self, block):
+        return
+        
 
 #    def valid_proof(.., difficulty: MINING_DIFFICULTY):
         
@@ -148,9 +170,11 @@ class Node:
         pass
         #check for the longer chain across all nodes
         
+"""
 my_node1 = Node()
 my_node2 = Node()
 my_node_baddie = Node()
 my_transaction = my_node1.create_transaction(my_node2.wallet['address'], 10)
 verification = my_node2.verify_signature(my_node_baddie.wallet['address'], my_transaction.hash, my_transaction.signature)
 print(verification)
+"""

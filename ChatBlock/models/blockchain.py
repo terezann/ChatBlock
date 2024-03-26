@@ -7,7 +7,7 @@ class Blockchain:
         # Create the first block (genesis block)
         # Customize as per your requirements
         genesis_block = Block(0, "1", "Genesis Block", "genesis_hash")
-        self.chain.append(genesis_block)
+        return genesis_block
 
     def create_new_block(self, data):
         # Create a new block and add it to the chain
@@ -16,4 +16,4 @@ class Blockchain:
         new_timestamp = time.time()
         new_hash = self.calculate_hash(new_index, previous_block.hash, new_timestamp, data)
         new_block = Block(new_index, previous_block.hash, new_timestamp, data, new_hash)
-        self.chain.append(new_block)
+        return new_block
