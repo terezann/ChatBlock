@@ -145,8 +145,9 @@ class Node:
     
 
     def validate_chain(self, chain):
-        pass
-        #check for the longer chain across all nodes
+        self.blockchain.append(chain[0])  # add genesis block to blockchain
+        for block in chain[1:]:
+            self.validate_block(block)
         
 my_node1 = Node()
 my_node2 = Node()
