@@ -9,10 +9,20 @@ import time
 
 from Crypto.Signature import PKCS1_v1_5
 
+from binascii import hexlify, unhexlify
+from collections import OrderedDict
+
+from Crypto import Random
+from Crypto.Hash import SHA
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+
 capacity = block.capacity
 
 class Node:
-    def __init__(self, is_boot = False):
+    def __init__(self, ip, port, is_boot = False):
+        self.ip = ip
+        self.port = port
         self.blockchain=[]
         self.is_boot = is_boot
         self.id = self.set_id()
@@ -62,7 +72,7 @@ class Node:
         return wallet.Wallet().new_wallet()
         
 
-    def register_node(self, id, ip, public_key, balance, stake):
+    def register_node(self, id, ip, port, public_key, balance, stake):
         #add this node to the ring, only the bootstrap node can add a node to the ring after checking its wallet and ip:port address
         #bootstrap node informs all other nodes and gives the request node an id and 100NBCs.
         if self.id != 0: #if I am not the bootstrap
@@ -72,6 +82,7 @@ class Node:
         #add the node
         self.ring.append({'id' : id,
                           'ip' : ip,
+                          'port' : port,
                           'address' : public_key,
                           #'balance' : balance
                         })
@@ -79,7 +90,7 @@ class Node:
         self.stakes.append(stake)
         self.nonces.append(0)
 
-    def create_transaction(self, receiver_address, value):
+    def create_transaction(self, receiver_address, value, broadcast=True):
         my_transaction = transaction.Transaction(
             self.wallet['address'], 
             self.wallet['private_key'], 
@@ -89,7 +100,8 @@ class Node:
             self.nonces[self.id])
         #remember to broadcast it
         #self.nonces[self.id] += 1
-        self.broadcast_transaction(my_transaction)
+        if broadcast:
+            self.broadcast_transaction(my_transaction)
         return my_transaction
 
     def verify_signature(self, sender_address, hash, signature):
@@ -128,7 +140,7 @@ class Node:
         # Create the first block (genesis block)
         # Customize as per your requirements
         #myblock = block.Block(index, validator, previous_hash, self.transactions.copy())
-        genesis_block = block.Block(0, 0, 1, [self.create_transaction(0, 1000*n)])
+        genesis_block = block.Block(0, 0, 1, [self.create_transaction(0, 1000*n, broadcast=False)])
         self.blockchain.append(genesis_block)
 
     # Create new block
@@ -141,14 +153,6 @@ class Node:
         new_block = Block(new_index, previous_block.hash, new_timestamp, data, new_hash)
         return new_block
             
-
-    # def add_transaction_to_block(self):
-        
-    def broadcast_transaction(self, transaction):
-        return
-
-    def broadcast_block(self, block):
-        return
         
 
 #    def valid_proof(.., difficulty: MINING_DIFFICULTY):
@@ -176,6 +180,7 @@ class Node:
 
     def start_listener(self):
         server_address = (self.ip, self.port)
+        print("server_address: ", server_address)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.bind(server_address)
             sock.listen()
@@ -197,11 +202,14 @@ class Node:
 
     def handle_received_data(self, data):
         received_message = pickle.loads(data)
+        #public_key = RSA.import_key(public_key_string.encode())
         message_type = received_message[0]
-        received_object = received_message[1]
+        received_object = received_message[1] 
 
         if message_type == 'address':
-            print("Address: ", received_object)
+            received_object = RSA.import_key(received_object.encode())
+
+        #elif message_type == 'node_info'
 
         return
 
@@ -214,6 +222,8 @@ class Node:
 
     def broadcast_transaction(self, transaction):
         threads = []
+        print(self.ring)
+        print(transaction)
         for node_info in self.ring:
             thread = threading.Thread(target=self.send_transaction, args=(node_info, transaction))
             thread.start()
@@ -222,7 +232,7 @@ class Node:
             thread.join()
 
     def send_transaction(self, node_info, transaction):
-        print("HERE")
+        print("ip: ", node_info['ip'])
         node_address = (node_info['ip'], node_info['port'])
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -236,10 +246,25 @@ class Node:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect(bootstrap_address)
-                serialized_wallet_address = pickle.dumps(('address', self.wallet['address']))
+                serialized_wallet_address = pickle.dumps(('address', self.wallet['address'].export_key().decode()))
+                #print(serialized_wallet_address)
                 sock.sendall(serialized_wallet_address)
+        except ConnectionResetError:
+            print("Socket Closed by the other end")
         except Exception as e:
             print(f"Error sending wallet address to bootstrap node at {bootstrap_address}: {e}")
+
+    # Send id from bootstrap to node
+    def send_info_to_nodes(self, node_address, id, blockchain):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect(node_address)
+                serialized_id = pickle.dumps(('node_info', id, blockchain))
+                sock.sendall(serialized_id)
+        except ConnectionResetError:
+            print("Socket Closed by the other end")
+        except Exception as e:
+            print(f"Error sending info to node at {node_address}: {e}")
         
 """
 my_node1 = Node()
@@ -256,8 +281,8 @@ n = 10
 bootstrap_address = ('localhost', 5000)  # Update with the actual address of the bootstrap node
 
 # Create the bootstrap node
-bootstrap_node = Node(is_boot=True)
-bootstrap_node.register_node(bootstrap_node.id, 1, bootstrap_node.wallet['address'], 0, 0)
+bootstrap_node = Node('localhost', 5000, is_boot=True)
+bootstrap_node.register_node(bootstrap_node.id, 'localhost', 5000, bootstrap_node.wallet['address'], 0, 0)
 
 # Create the blockchain and genesis block
 bootstrap_node.create_genesis_block(n)
@@ -268,7 +293,7 @@ threading.Thread(target=bootstrap_node.start_listener).start()
 # Create 9 more nodes and register them with the bootstrap node
 nodes = []
 for i in range(1, 10):
-    node = Node(is_boot=False)
+    node = Node('localhost', 5000+i, is_boot=False)
     nodes.append(node)
     # Start listener for non-bootstrap nodes
     threading.Thread(target=node.start_listener).start()
