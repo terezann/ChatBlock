@@ -20,6 +20,7 @@ from Crypto.Signature import PKCS1_v1_5
 capacity = block.capacity
 
 class Node:
+    node_id = 0
     def __init__(self, ip, port, is_boot = False):
         self.ip = ip
         self.port = port
@@ -69,10 +70,25 @@ class Node:
 
     def create_wallet(self):
         #create a wallet for this node, with a public key and a private key
-        return wallet.Wallet().new_wallet()
+        random_generator = Random.new().read
+        key = RSA.generate(1024, random_generator)
+
+        private_key = key
+        public_key = key.publickey()
+
+        # Serialize RSA keys into their string representations
+        ser_private_key = key.exportKey().decode('utf-8')
+        ser_public_key = public_key.exportKey().decode('utf-8')
+
+        response = {
+            'private_key': ser_private_key,
+            'address': ser_public_key
+        }
+        
+        return response
         
 
-    def register_node(self, id, ip, port, public_key, balance, stake):
+    def register_node(self, id, ip, port, public_key, balance=0, stake=0):
         #add this node to the ring, only the bootstrap node can add a node to the ring after checking its wallet and ip:port address
         #bootstrap node informs all other nodes and gives the request node an id and 100NBCs.
         if self.id != 0: #if I am not the bootstrap
@@ -206,10 +222,23 @@ class Node:
         message_type = received_message[0]
         received_object = received_message[1] 
 
-        if message_type == 'address':
-            received_object = RSA.import_key(received_object.encode())
+        if message_type == 'address, ip, port':
+            ('localhost', 5000)
+            Node.node_id += 1
+            address = RSA.import_key(received_object[0].encode())
+            ip = received_object[1]
+            port = received_object[2]
+            self.register_node(Node.node_id, ip, port, address)
+            threading.Thread(target=bootstrap_node.send_info_to_nodes((ip, port), Node.node_id, self.blockchain))
 
-        #elif message_type == 'node_info'
+        elif message_type == 'node_id, bootstrap_blockchain':
+            print("HEY")
+            self.id = received_object[0]
+            self.blockchain = received_object[1]
+            print("Block: ", self.blockchain[0])
+            print("Block type: ", type(self.blockchain[0]))
+            print(self.id, self.blockchain)
+
 
         return
 
@@ -246,7 +275,7 @@ class Node:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect(bootstrap_address)
-                serialized_wallet_address = pickle.dumps(('address', self.wallet['address'].export_key().decode()))
+                serialized_wallet_address = pickle.dumps(('address, ip, port', (self.wallet['address'], self.ip, self.port)))
                 #print(serialized_wallet_address)
                 sock.sendall(serialized_wallet_address)
         except ConnectionResetError:
@@ -259,7 +288,7 @@ class Node:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect(node_address)
-                serialized_id = pickle.dumps(('node_info', id, blockchain))
+                serialized_id = pickle.dumps(('node_id, bootstrap_blockchain', (id, blockchain)))
                 sock.sendall(serialized_id)
         except ConnectionResetError:
             print("Socket Closed by the other end")

@@ -36,6 +36,9 @@ class Block:
         #calculate self.hash
         return SHA.new(str(self.to_dict).encode("utf-8")).hexdigest()
     
+    def __reduce__(self):
+        return (self.__class__, (self.index, self.validator, self.previous_hash, self.list_of_transactions))
+
     # def add_transaction(self, transaction): #add a blockchain parameter
     #     #add a transaction to the block
     #     if len(self.list_of_transactions) == capacity:

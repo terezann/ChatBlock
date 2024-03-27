@@ -29,7 +29,8 @@ class Transaction:
         self.hash = SHA.new(str(self.to_dict).encode("utf-8"))
         self.transaction_id = self.hash.hexdigest()
         #self.signature με το private key
-        self.signature = self.sign_transaction(sender_private_key)
+        self.sender_private_key = sender_private_key
+        self.signature = self.sign_transaction(RSA.import_key(self.sender_private_key))
 
 
     def to_dict(self):
@@ -48,6 +49,9 @@ class Transaction:
         signer = PKCS1_v1_5.new(private_key)
         signature = signer.sign(self.hash)
         return signature
+    
+    def __reduce__(self):
+        return (self.__class__, (self.sender_address, self.sender_private_key, self.receiver_address, self.amount, self.type_of_transaction, self.nonce))
 
 #sender_private_key = "3081a7301006072a8648ce3d020106052b8104002203620004bb39e0e3d69e6b8d20d8c5a888c7811b7c9d1be4ee08d1ed2b6ee740e2e3dd400220d5e52ef89eeb4bc899ad08d25e50d1b090981c300fbc7fc07515d7330af39e5"
 #sender_public_key = "30820122300d06092a864886f70d01010105000382010f003082010a0282010100bf93bbf1e6a9eb511575cc15c4c0784a74a8ef3521db0150e3c9e468535de3a9b7f4745c68e693ef3e7716934a3ebf7d21dbf2f65eb239876b2fcab1192850d282153f5ab9d39b0f3ee0e6a7f4b964c9ff74a565f55ef97d10667f34c723c9c9c687c39f3c9e7258a2d0d189b85a7069de12789e81f361a26b29d0e9d01241a104308c8998f628bc4b858b67a9de57f122e5e20ad9f23d670808a604eaa96e6aeb362c99f16868461f8d14749d8f33a6cb7a26af3c01f18e5fb5efdf3a8fe108fd991f39fe82f262d690f079b208d7b44c80d8e87127636d774c67a2e762ac844e245f0203010001"
