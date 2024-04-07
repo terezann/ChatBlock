@@ -9,7 +9,7 @@ from Crypto.Hash import SHA
 capacity = 5
 
 class Block:
-    def __init__(self, index, validator, previous_hash, transactions):
+    def __init__(self, index, validator, previous_hash, transactions, hash=None):
         ##set
         self.index = index
         #self.previousHash
@@ -20,7 +20,10 @@ class Block:
         self.list_of_transactions = transactions
         self.validator = validator
         self.capacity = capacity
-        self.hash = self.myHash()
+        if hash == None:
+            self.hash = self.myHash()
+        else:
+            self.hash = hash
         
 
     def to_dict(self):
@@ -37,7 +40,7 @@ class Block:
         return SHA.new(str(self.to_dict).encode("utf-8")).hexdigest()
     
     def __reduce__(self):
-        return (self.__class__, (self.index, self.validator, self.previous_hash, self.list_of_transactions))
+        return (self.__class__, (self.index, self.validator, self.previous_hash, self.list_of_transactions, self.hash))
 
     # def add_transaction(self, transaction): #add a blockchain parameter
     #     #add a transaction to the block
