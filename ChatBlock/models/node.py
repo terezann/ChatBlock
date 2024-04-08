@@ -1,5 +1,4 @@
 import block
-import wallet
 import random
 import transaction
 import socket
@@ -37,7 +36,10 @@ class Node:
         self.balances = [0]*n
         self.nonces = [0]*n
         print(f"Node with address {self.port} generated")
+<<<<<<< HEAD
         
+=======
+>>>>>>> 0e59f79aec183fe441baa51a0b5dea1e8bc4648f
         threading.Thread(target=self.start_listener).start()
 
         # Send wallet address to bootstrap node
@@ -414,6 +416,7 @@ my_transaction = my_node1.create_transaction(my_node2.wallet['address'], 10)
 verification = my_node2.verify_signature(my_node_baddie.wallet['address'], my_transaction.hash, my_transaction.signature)
 print(verification)
 """
+'''
 n = 6
 
 
@@ -445,9 +448,10 @@ nodes[1].stake(5000)
 print("Stakes: ", nodes[2].stakes)
 
 time.sleep(1)
-for i in range(100):
+for i in range(5):
     sender_id = random.randint(0, n-1)
     receiver_id = random.randint(0, n-1)
     amount = random.randint(1, 500)
     receiver_address = nodes[0].ring[receiver_id]['address']
     nodes[sender_id].create_transaction(receiver_id, receiver_address, amount)
+'''
