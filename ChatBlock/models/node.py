@@ -1,5 +1,4 @@
 import block
-import wallet
 import random
 import transaction
 import socket
@@ -413,6 +412,7 @@ my_transaction = my_node1.create_transaction(my_node2.wallet['address'], 10)
 verification = my_node2.verify_signature(my_node_baddie.wallet['address'], my_transaction.hash, my_transaction.signature)
 print(verification)
 """
+'''
 n = 6
 
 
@@ -450,3 +450,4 @@ for i in range(5):
     amount = random.randint(1, 500)
     receiver_address = nodes[0].ring[receiver_id]['address']
     nodes[sender_id].create_transaction(receiver_id, receiver_address, amount)
+'''
