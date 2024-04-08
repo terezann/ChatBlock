@@ -37,7 +37,7 @@ class Node:
         self.balances = [0]*n
         self.nonces = [0]*n
         print(f"Node with address {self.port} generated")
-         # Start listener for non-bootstrap nodes
+        
         threading.Thread(target=self.start_listener).start()
 
         # Send wallet address to bootstrap node
