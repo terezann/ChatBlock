@@ -36,6 +36,10 @@ class Node:
         self.balances = [0]*n
         self.nonces = [0]*n
         print(f"Node with address {self.port} generated")
+<<<<<<< HEAD
+        
+=======
+>>>>>>> 0e59f79aec183fe441baa51a0b5dea1e8bc4648f
         threading.Thread(target=self.start_listener).start()
 
         # Send wallet address to bootstrap node
