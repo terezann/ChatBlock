@@ -41,7 +41,10 @@ class Node:
         # Send wallet address to bootstrap node
         if is_boot == False:
             threading.Thread(target=self.send_wallet_address_to_bootstrap, args=(bootstrap_address,)).start()
-        
+        else:
+            self.register_node(self.id, self.ip, self.port, self.wallet['address'])
+            self.create_genesis_block(n)
+
     def set_id(self):
         if self.is_boot:
             return 0
@@ -110,6 +113,7 @@ class Node:
         print(f"Bootstrap added node {id} to ring")
 
     def create_transaction(self, receiver_id, receiver_address, value, broadcast=True, type_of_transaction='money'):
+        print(type_of_transaction, value)
         my_transaction = transaction.Transaction(
             self.id,
             receiver_id,
@@ -122,7 +126,7 @@ class Node:
         #remember to broadcast it
         #self.nonces[self.id] += 1
         if broadcast:
-            print(f"Transaction from {self.id} to {receiver_id} of value {value}")
+            print(f"Transaction from {self.id} to {receiver_id} - {value}")
             self.broadcast_transaction(my_transaction)
         return my_transaction
 

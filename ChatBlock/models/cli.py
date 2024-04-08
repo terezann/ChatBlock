@@ -20,38 +20,54 @@ from tabulate import tabulate
 
 
 @click.group()
+@click.option('--is_boot', type=bool, default=False, help='Whether the node is bootstrap or not.')
+@click.option('--n', type=int, help='Number of nodes in the network.')
+@click.pass_context
 def main(ctx, is_boot, n):
     '''ChatBlock command interface'''
+    if 'mynode' not in ctx.obj:
+        ctx.obj['mynode'] = node.Node('localhost', 5000, is_boot, n)
+        click.echo("Main command group initialized.")
 
-    ctx.obj['mynode'] = node.Node('localhost', 5000, is_boot, n)
 
 def validate_address(value):
     """
     Custom type converter function to extract integer value from a string of the format id{int}.
     """
-    match = re.match(r'id{(\d+)}', value)
+    click.echo("Validating recipient address...")
+
+    match = re.match(r'id(\d+)', value)
     if match:
+        click.echo("Recipient address validated.")
         return int(match.group(1))
+    
     else:
+        click.echo("Invalid recipient address format.")
         raise click.BadParameter('Invalid format. Expected format: id{int}')
 
 def int_or_string(value):
     """
     Custom type converter function that accepts either a string or an int.
     """
+    click.echo("Converting value to integer or string...")
     try:
         # Try converting the value to int
-        return int(value)
+        result = int(value)
+        click.echo("Value converted to integer.")
+        return result
+
     except ValueError:
         # If conversion to int fails, return the value as string
+        click.echo("Value is not an integer. Keeping it as string.")
         return str(value)
 
 @main.command(short_help='Create a new transaction')
 @click.argument('recipient_address', type = validate_address)
 @click.argument('message', type = int_or_string)
+@click.pass_context
 def t(ctx, recipient_address, message):
     '''Send a message to the recipient address'''
-	
+    click.echo("Executing 't' command...")
     id = recipient_address
     mynode = ctx.obj['mynode']
     if type(message) == int:
@@ -61,3 +77,5 @@ def t(ctx, recipient_address, message):
     else:
         click.echo(f'Sending \'{message}\' message to node {id}.')
         mynode.create_transaction(id, mynode.ring[id]['address'], message, broadcast=True, type_of_transaction='string')
+if __name__ == '__main__':
+    main(obj={})
