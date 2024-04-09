@@ -21,10 +21,11 @@ fee = 0.03
 
 class Node:
     node_id = 0
-    def __init__(self, ip, port, is_boot = False, n=1):
+    def __init__(self, ip, port, bootstrap_address, is_boot = False, n=1):
         self.n = n
         self.ip = ip
         self.port = port
+        self.boooootstrap_address = bootstrap_address
         self.blockchain=[]
         self.is_boot = is_boot
         self.id = self.set_id()
@@ -41,10 +42,13 @@ class Node:
 
         # Send wallet address to bootstrap node
         if is_boot == False:
-            threading.Thread(target=self.send_wallet_address_to_bootstrap, args=(bootstrap_address,)).start()
+            threading.Thread(target=self.send_wallet_address_to_bootstrap, args=(bootstrap_address)).start()
         else:
             self.register_node(self.id, self.ip, self.port, self.wallet['address'])
             self.create_genesis_block(n)
+
+    def __reduce__(self):
+        return (self.__class__, (self.ip, self.port, self.bootstrap_address, self.is_boot, self.n))
 
     def set_id(self):
         if self.is_boot:
@@ -64,6 +68,16 @@ class Node:
         if self.id == validator:
             print("Validator: ", validator)
         return validator
+
+    def view_block(self):
+        last_block:block.Block = self.blockchain[-1]
+        print(f"\nThe validator of the last block was {last_block.validator}")
+        print(f"The transactions documented in the last block are presented below.")
+        t:transaction.Transaction
+        for t in last_block.list_of_transactions:
+            print(f"Transaction of {t.type_of_transaction} from node{t.sender_id} to node{t.receiver_id}.\
+                    The value of the transaction is {t.value}.\n")
+
 
     def mine_block(self):
         last_block = self.blockchain[-1]
@@ -278,7 +292,7 @@ class Node:
             port = received_object[2]
             self.register_node(Node.node_id, ip, port, address)
             print(f"Bootstrap received info from node with address {port} and gives to the node the id {Node.node_id}")
-            threading.Thread(target=bootstrap_node.send_info_to_nodes((ip, port), Node.node_id))
+            threading.Thread(target=self.send_info_to_nodes((ip, port), Node.node_id))
             self.create_transaction(Node.node_id, address, 1000)
             if Node.node_id == self.n-1:
                 self.broadcast_ring()
