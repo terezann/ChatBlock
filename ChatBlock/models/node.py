@@ -433,7 +433,7 @@ if __name__ == "__main__":
     else:
         # Run this block if "bootstrap" argument is not provided
         node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
-        time.sleep(1)
+        time.sleep(10)
         if node.id  == 1:
             receiver_id = 2
             receiver_address = node.ring[receiver_id]['address']
