@@ -183,7 +183,9 @@ class Node:
             self.transactions.append(transaction)
             if len(self.transactions) >= capacity:
                 self.mine_block()
-        else: print(f"Node {self.id} does NOT validate transaction from {sender_id} to {receiver_id} with content: {transaction.value}.")
+        else: 
+            print(f"Node {self.id} does NOT validate transaction from {sender_id} to {receiver_id} with content: {transaction.value}.")
+            print(f"Problem: nonces-> {noncesOk}, verify-> {isVerify}, enough_money-> {enough_money}.")
 
         return combo
     
