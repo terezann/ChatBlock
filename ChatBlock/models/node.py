@@ -433,8 +433,7 @@ def process_transactions(node, num):
         with open(filename, "r") as file:
             l = 0
             for line in file:
-                print(l, num)
-                if l==num:
+                if l==1:
                     break
                 parts = line.strip().split(" ", 1)
                 if len(parts) == 2:
