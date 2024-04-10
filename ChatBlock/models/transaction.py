@@ -40,8 +40,6 @@ class Transaction:
             return self.value
         
         elif self.type_of_transaction == 'string':
-            print(self.value)
-            print(type(self.value))
             return len(self.value)
 
 

@@ -38,7 +38,7 @@ class Node:
         self.balances = [0]*n
         self.nonces = [0]*n
         self.node_ready = False
-        print(f"Node with address {self.port} generated")
+        print(f"Node with ip {self.ip} generated")
         
         threading.Thread(target=self.start_listener).start()
 
@@ -67,8 +67,6 @@ class Node:
         random.seed(seed)
         winner = random.randint(0, lottery_sum-1)
         validator = lottery_players[winner]
-        if self.id == validator:
-            print("Validator: ", validator)
         return validator
 
     def view_block(self):
@@ -129,7 +127,6 @@ class Node:
         print(f"Bootstrap added node {id} to ring")
 
     def create_transaction(self, receiver_id, receiver_address, value, broadcast=True, type_of_transaction='money'):
-        print(type_of_transaction, value)
         my_transaction = transaction.Transaction(
             self.id,
             receiver_id,
@@ -142,7 +139,7 @@ class Node:
         #remember to broadcast it
         #self.nonces[self.id] += 1
         if broadcast:
-            print(f"Transaction from {self.id} to {receiver_id} - {value}")
+            print(f"Node {self.id} sends transaction to {receiver_id} with content: {value}.")
             self.broadcast_transaction(my_transaction)
         return my_transaction
 
@@ -171,20 +168,22 @@ class Node:
         combo = isVerify and enough_money and noncesOk
         #allazei to nohma
         if combo:
+            print(f"Node {self.id} validates transaction from {sender_id} to {receiver_id} with content: {transaction.value}.") 
             self.nonces[sender_id] += 1
             if update_balance:
+                print(f"It also updates the balance ;)")
                 self.balances[sender_id] -= required_money
                 self.balances[receiver_id] += transaction.amount
             self.transactions.append(transaction)
             if len(self.transactions) >= capacity:
-                print(f"Node {self.id} mining a block")
                 self.mine_block()
+        else: print(f"Node {self.id} does NOT validate transaction from {sender_id} to {receiver_id} with content: {transaction.value}.")
 
         return combo
     
     
     def stake(self, amount):
-        print(f"Broadcasting stake")
+        print(f"Node {self.id} is setting the stake to {amount}...")
         threads = []
         for node_info in self.ring:
             thread = threading.Thread(target=self.send_stake, args=(node_info, amount))
@@ -214,14 +213,14 @@ class Node:
         genesis_block = block.Block(0, 0, 1, [self.create_transaction(-1, 0, 1000*n, broadcast=False)])
         self.balances[0] = 1000*n
         self.blockchain.append(genesis_block)
-        print("Genesis block is created")
+        print("Genesis block is created!")
                     
 
 #    def valid_proof(.., difficulty: MINING_DIFFICULTY):
         
     #consensus functions
 
-    def validate_block(self, block):
+    def validate_block(self, block:block.Block):
         current_balance = self.balances.copy()
 
         last_block = self.blockchain[-1]
@@ -238,6 +237,7 @@ class Node:
 
         block_correct = validator_correct and hash_correct and trans_validated
         if block_correct:
+            print(f"Block {block.index} with validator {block.validator} is checked by node {self.id}.")
             self.blockchain.append(block)
             for t in block.list_of_transactions:
                 if t.type_of_transaction == 'money':
@@ -249,6 +249,7 @@ class Node:
                         self.transactions.remove(t2)
         else:
             self.balances = current_balance.copy()  # if block is not validated, undo all balance changes
+            print(f"Block {block.index} is NOT validated by node {self.id}.")
 
         return block_correct
     
@@ -297,7 +298,7 @@ class Node:
             ip = received_object[1]
             port = received_object[2]
             self.register_node(Node.node_id, ip, port, address)
-            print(f"Bootstrap received info from node with address {port} and gives to the node the id {Node.node_id}")
+            print(f"Bootstrap received info from node with ip {ip} and gives to the node the id {Node.node_id}")
             threading.Thread(target=self.send_info_to_nodes((ip, port), Node.node_id))
             self.create_transaction(Node.node_id, address, 1000)
             if Node.node_id == self.n-1:
@@ -312,11 +313,10 @@ class Node:
             self.nonces = received_object[4]
 
         elif message_type == 'transaction':
-            print(f"Node {self.id} received transaction of value {received_object.amount}")
             self.validate_transaction(received_object, False)
 
         elif message_type == 'block':
-            print(f"Node {self.id} received block")
+            print(f"Node {self.id} received block: {received_object.index}.")
             self.validate_block(received_object)
         
         elif message_type == 'ring':
@@ -329,16 +329,15 @@ class Node:
             amount = received_object[1]
             total_balance = self.balances[id] + self.stakes[id]
             if amount > total_balance:
-                if self.id == id: print(f"Node {id} does not have enough money for the staking")
+                if self.id == id: print(f"Node {id} does not have enough money for the staking :/)")
             else:
-                if self.id == id: print(f"Node {id} updates it's staking to {amount}")
+                if self.id == id: print(f"Node {id} updates it's stake to {amount}")
                 self.stakes[id] = amount
                 self.balances[id] = total_balance - amount
 
         return
 
     def broadcast_transaction(self, transaction):
-        print(f"Broadcasting transaction")
         threads = []
         for node_info in self.ring:
             thread = threading.Thread(target=self.send_transaction, args=(node_info, transaction))
@@ -401,10 +400,9 @@ class Node:
     def send_wallet_address_to_bootstrap(self, bootstrap_address):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                print(f"Node with address {self.port} sends it's address to bootstrap")
+                print(f"Node with ip {self.ip} sends its address to bootstrap")
                 sock.connect(bootstrap_address)
                 serialized_wallet_address = pickle.dumps(('address, ip, port', (self.wallet['address'], self.ip, self.port)))
-                #print(serialized_wallet_address)
                 sock.sendall(serialized_wallet_address)
         except ConnectionResetError:
             print("Socket Closed by the other end")
@@ -423,14 +421,13 @@ class Node:
         except Exception as e:
             print(f"Error sending info to node at {node_address}: {e}")
 
-def process_transactions(node):
+def process_transactions(node, num):
     filename = f"./trans{node.id}.txt"
-    print(filename)
     try:
         with open(filename, "r") as file:
             l = 0
             for line in file:
-                if l==10:
+                if l==num:
                     break
                 parts = line.strip().split(" ", 1)
                 if len(parts) == 2:
@@ -452,13 +449,21 @@ if __name__ == "__main__":
         bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
         while bootstrap_node.node_ready == False:
             time.sleep(0.0001)
-        process_transactions(bootstrap_node)
+        process_transactions(bootstrap_node, sys.argv[2])
+        print("--------------------------------------------------------")
+        print(f"Balances: {bootstrap_node.balances}")
+        print(f"Stakes: {bootstrap_node.stakes}")
+        print(f"Blockchain Length: {len(bootstrap_node.blockchain)}")
     else:
         # Run this block if "bootstrap" argument is not provided
         node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
         while node.node_ready == False:
             time.sleep(0.0001)
-        process_transactions(node)
+        process_transactions(node, sys.argv[2])
+        print("--------------------------------------------------------")
+        print(f"Balances: {node.balances}")
+        print(f"Stakes: {node.stakes}")
+        print(f"Blockchain Length: {len(node.blockchain)}")
 
 
     
