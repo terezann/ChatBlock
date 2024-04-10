@@ -37,6 +37,7 @@ class Node:
         self.stakes = [1] + [0]*(n-1)
         self.balances = [0]*n
         self.nonces = [0]*n
+        self.node_ready = False
         print(f"Node with address {self.port} generated")
         
         threading.Thread(target=self.start_listener).start()
@@ -87,9 +88,8 @@ class Node:
         index = last_block.index + 1
         validator = self.POS(seed)
         if (validator == self.id):
-            myblock = block.Block(index, validator, previous_hash, self.transactions.copy())
+            myblock = block.Block(index, validator, previous_hash, self.transactions[:capacity].copy())
             self.broadcast_block(myblock)
-        self.transactions = []
 
     def create_wallet(self):
         #create a wallet for this node, with a public key and a private key
@@ -152,7 +152,7 @@ class Node:
         verification = verifier.verify(hash, signature)
         return verification
 
-    def validate_transaction(self, transaction:transaction.Transaction):
+    def validate_transaction(self, transaction:transaction.Transaction, update_balance=False):
         if transaction.type_of_transaction == 'money':
             required_money = transaction.amount*(1+fee)
         elif transaction.type_of_transaction == 'string':
@@ -171,12 +171,12 @@ class Node:
         combo = isVerify and enough_money and noncesOk
         #allazei to nohma
         if combo:
-            print(f"Transaction validated by node {self.id}")
             self.nonces[sender_id] += 1
-            self.balances[sender_id] -= required_money
-            self.balances[receiver_id] += transaction.amount
+            if update_balance:
+                self.balances[sender_id] -= required_money
+                self.balances[receiver_id] += transaction.amount
             self.transactions.append(transaction)
-            if len(self.transactions) == capacity:
+            if len(self.transactions) >= capacity:
                 print(f"Node {self.id} mining a block")
                 self.mine_block()
 
@@ -222,7 +222,8 @@ class Node:
     #consensus functions
 
     def validate_block(self, block):
-        print(f"Node {self.id} validating...")
+        current_balance = self.balances.copy()
+
         last_block = self.blockchain[-1]
         previous_hash = last_block.hash
         validator = self.POS(previous_hash)
@@ -230,22 +231,26 @@ class Node:
         validator_correct = (validator == block.validator)
         hash_correct = (previous_hash == block.previous_hash)
 
-        if validator_correct and hash_correct and self.id == validator:
-            print(f"Balances before validating: {self.balances}")
+        trans_validated = True
+        if hash_correct and validator_correct:
+            for t in block.list_of_transactions:
+                trans_validated = trans_validated and self.validate_transaction(t, True)
 
-        if validator_correct and hash_correct:
+        block_correct = validator_correct and hash_correct and trans_validated
+        if block_correct:
             self.blockchain.append(block)
             for t in block.list_of_transactions:
                 if t.type_of_transaction == 'money':
                     self.balances[validator] += fee*t.amount
                 elif t.type_of_transaction == 'string':
                     self.balances[validator] += t.amount
-            self.transactions = []
-       
-        if validator_correct and hash_correct and self.id == validator:
-            print(f"Balances after validating: {self.balances}")
+                for t2 in self.transactions: #remove the transactions which are in the incoming block
+                    if t2.hash == t.hash:
+                        self.transactions.remove(t2)
+        else:
+            self.balances = current_balance.copy()  # if block is not validated, undo all balance changes
 
-        return validator_correct and hash_correct
+        return block_correct
     
 
     def validate_chain(self, chain):
@@ -308,7 +313,7 @@ class Node:
 
         elif message_type == 'transaction':
             print(f"Node {self.id} received transaction of value {received_object.amount}")
-            self.validate_transaction(received_object)
+            self.validate_transaction(received_object, False)
 
         elif message_type == 'block':
             print(f"Node {self.id} received block")
@@ -317,6 +322,7 @@ class Node:
         elif message_type == 'ring':
             print(f"Node {self.id} received ring")
             self.ring = received_object
+            self.node_ready = True
         
         elif message_type == 'stake':
             id = received_object[0]
@@ -330,13 +336,6 @@ class Node:
                 self.balances[id] = total_balance - amount
 
         return
-
-        if isinstance(received_object, transaction.Transaction):
-            print(f"Node {self.id} received transaction from Node {received_object.sender_id}: "
-                  f"Sender: {received_object.sender_id}, Receiver: {received_object.receiver_id}, "
-                  f"Amount: {received_object.amount}")
-        else:
-            print(f"Node {self.id} received unrecognized data")
 
     def broadcast_transaction(self, transaction):
         print(f"Broadcasting transaction")
@@ -424,20 +423,43 @@ class Node:
         except Exception as e:
             print(f"Error sending info to node at {node_address}: {e}")
 
+def process_transactions(node):
+    filename = f"./trans{node.id}.txt"
+    print(filename)
+    try:
+        with open(filename, "r") as file:
+            l = 0
+            for line in file:
+                if l==10:
+                    break
+                parts = line.strip().split(" ", 1)
+                if len(parts) == 2:
+                    receiver_id = int(parts[0][2:])  # Extract the integer part after "id"
+                    message = parts[1]  # Extract the string part after the integer
+                    receiver_address = node.ring[receiver_id]['address']
+                    node.create_transaction(receiver_id, receiver_address, message, True, 'string')
+                    l += 1
+    except FileNotFoundError:
+        print(f"File {filename} not found.")
+    except Exception as e:
+        print(f"Error reading file {filename}: {e}")
+
 if __name__ == "__main__":
     bootstrap_address = ('192.168.0.3', 5000)
     # Check if a specific argument is provided
     if len(sys.argv) > 1 and sys.argv[1] == "bootstrap":
         # Run this block if "bootstrap" argument is provided
         bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
+        while bootstrap_node.node_ready == False:
+            time.sleep(0.0001)
+        process_transactions(bootstrap_node)
     else:
         # Run this block if "bootstrap" argument is not provided
         node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
-        time.sleep(10)
-        if node.id  == 1:
-            receiver_id = 2
-            receiver_address = node.ring[receiver_id]['address']
-            node.create_transaction(receiver_id, receiver_address, 10, True, 'money')
+        while node.node_ready == False:
+            time.sleep(0.0001)
+        process_transactions(node)
+
 
     
 
