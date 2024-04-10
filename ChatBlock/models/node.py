@@ -170,15 +170,16 @@ class Node:
         #allazei to nohma
         if combo:
             print(f"Node {self.id} validates transaction from {sender_id} to {receiver_id} with content: {transaction.value}.") 
-            self.nonces[sender_id] += 1
             if not update_balance and transaction.is_first:   # This will be called only once when the node receives the initial money
                 print(f"It also updates the balance ;)")
                 self.balances[sender_id] -= required_money
                 self.balances[receiver_id] += transaction.amount
+                self.nonces[sender_id] += 1
             if update_balance and not transaction.is_first:
                 print(f"It also updates the balance ;)")
                 self.balances[sender_id] -= required_money
                 self.balances[receiver_id] += transaction.amount
+                self.nonces[sender_id] += 1
             self.transactions.append(transaction)
             if len(self.transactions) >= capacity:
                 self.mine_block()
