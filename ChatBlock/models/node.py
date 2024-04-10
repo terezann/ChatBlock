@@ -126,7 +126,7 @@ class Node:
 
         print(f"Bootstrap added node {id} to ring")
 
-    def create_transaction(self, receiver_id, receiver_address, value, broadcast=True, type_of_transaction='money'):
+    def create_transaction(self, receiver_id, receiver_address, value, broadcast=True, type_of_transaction='money', is_first = False):
         my_transaction = transaction.Transaction(
             self.id,
             receiver_id,
@@ -135,7 +135,8 @@ class Node:
             receiver_address, 
             value,
             type_of_transaction, 
-            self.nonces[self.id])
+            self.nonces[self.id],
+            is_first)
         #remember to broadcast it
         #self.nonces[self.id] += 1
         if broadcast:
@@ -170,7 +171,11 @@ class Node:
         if combo:
             print(f"Node {self.id} validates transaction from {sender_id} to {receiver_id} with content: {transaction.value}.") 
             self.nonces[sender_id] += 1
-            if update_balance:
+            if not update_balance and transaction.is_first:   # This will be called only once when the node receives the initial money
+                print(f"It also updates the balance ;)")
+                self.balances[sender_id] -= required_money
+                self.balances[receiver_id] += transaction.amount
+            if update_balance and not transaction.is_first:
                 print(f"It also updates the balance ;)")
                 self.balances[sender_id] -= required_money
                 self.balances[receiver_id] += transaction.amount
@@ -300,7 +305,7 @@ class Node:
             self.register_node(Node.node_id, ip, port, address)
             print(f"Bootstrap received info from node with ip {ip} and gives to the node the id {Node.node_id}")
             threading.Thread(target=self.send_info_to_nodes((ip, port), Node.node_id))
-            self.create_transaction(Node.node_id, address, 1000)
+            self.create_transaction(Node.node_id, address, 1000, is_first=True)
             if Node.node_id == self.n-1:
                 self.broadcast_ring()
 
@@ -422,6 +427,7 @@ class Node:
             print(f"Error sending info to node at {node_address}: {e}")
 
 def process_transactions(node, num):
+    print(f"Balances: {node.balances}")
     filename = f"./trans{node.id}.txt"
     try:
         with open(filename, "r") as file:
@@ -449,6 +455,7 @@ if __name__ == "__main__":
         bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
         while bootstrap_node.node_ready == False:
             time.sleep(0.0001)
+        time.sleep(5)
         process_transactions(bootstrap_node, sys.argv[2])
         print("--------------------------------------------------------")
         print(f"Balances: {bootstrap_node.balances}")
@@ -459,6 +466,7 @@ if __name__ == "__main__":
         node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
         while node.node_ready == False:
             time.sleep(0.0001)
+        time.sleep(5)
         process_transactions(node, sys.argv[2])
         print("--------------------------------------------------------")
         print(f"Balances: {node.balances}")
