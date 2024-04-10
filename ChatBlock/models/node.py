@@ -5,6 +5,7 @@ import socket
 import pickle
 import threading
 import time
+import sys
 
 from Crypto.Signature import PKCS1_v1_5
 
@@ -25,7 +26,7 @@ class Node:
         self.n = n
         self.ip = ip
         self.port = port
-        self.boooootstrap_address = bootstrap_address
+        self.bootstrap_address = bootstrap_address
         self.blockchain=[]
         self.is_boot = is_boot
         self.id = self.set_id()
@@ -42,7 +43,7 @@ class Node:
 
         # Send wallet address to bootstrap node
         if is_boot == False:
-            threading.Thread(target=self.send_wallet_address_to_bootstrap, args=(bootstrap_address)).start()
+            threading.Thread(target=self.send_wallet_address_to_bootstrap, args=(bootstrap_address,)).start()
         else:
             self.register_node(self.id, self.ip, self.port, self.wallet['address'])
             self.create_genesis_block(n)
@@ -422,6 +423,18 @@ class Node:
             print("Socket Closed by the other end")
         except Exception as e:
             print(f"Error sending info to node at {node_address}: {e}")
+
+if __name__ == "__main__":
+    bootstrap_address = ('192.168.0.3', 5000)
+    # Check if a specific argument is provided
+    if len(sys.argv) > 1 and sys.argv[1] == "bootstrap":
+        # Run this block if "bootstrap" argument is provided
+        bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
+    else:
+        # Run this block if "bootstrap" argument is not provided
+        node = Node('localhost', 5000, bootstrap_address, is_boot=False, n=5)
+
+
         
 """
 my_node1 = Node()
