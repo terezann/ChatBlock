@@ -432,7 +432,7 @@ if __name__ == "__main__":
         bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
     else:
         # Run this block if "bootstrap" argument is not provided
-        node = Node('localhost', 5000, bootstrap_address, is_boot=False, n=5)
+        node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
 
 
         
