@@ -452,7 +452,7 @@ def process_transactions(node, num):
         with open(filename, "r") as file:
             l = 0
             for line in file:
-                if l==5:
+                if l==100:
                     break
                 parts = line.strip().split(" ", 1)
                 if len(parts) == 2:
@@ -469,7 +469,7 @@ def process_transactions(node, num):
     end_time = time.time()
     print("Ending timestamp: ", end_time)
     print("Elapsed time: ", end_time - start_time)
-    print("Time per transaction: ", (end_time - start_time)/5)
+    print("Time per transaction: ", (end_time - start_time)/100)
 
 if __name__ == "__main__":
     bootstrap_address = ('192.168.0.3', 5000) ##83.212.80.198
