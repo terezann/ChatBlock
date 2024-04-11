@@ -140,8 +140,9 @@ class Node:
             self.nonces[self.id],
             )
         #remember to broadcast it
-        #self.nonces[self.id] += 1
+        
         if broadcast:
+            self.nonces[self.id] += 1
             print(f"Node {self.id} sends transaction to {receiver_id} with content: {value}.")
             self.broadcast_transaction(my_transaction)
         return my_transaction
@@ -174,7 +175,7 @@ class Node:
             print(f"Node {self.id} validates transaction from {sender_id} to {receiver_id} with content: {transaction.value}.") 
             self.balances[sender_id] -= required_money
             self.balances[receiver_id] += transaction.amount
-            self.nonces[sender_id] += 1
+            if self.id != sender_id: self.nonces[sender_id] += 1
             self.transactions.append(transaction)
             if len(self.transactions) >= capacity:
                 self.mine_block()
