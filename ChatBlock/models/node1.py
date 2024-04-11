@@ -36,7 +36,6 @@ class Node:
         self.transactions = []
         self.stakes = [1] + [0]*(n-1)
         self.balances = [0]*n
-        self.hard_balances = [0]*n
         self.nonces = [0]*n
         self.node_ready = False
         print(f"Node with ip {self.ip} generated")
@@ -127,7 +126,7 @@ class Node:
 
         print(f"Bootstrap added node {id} to ring")
 
-    def create_transaction(self, receiver_id, receiver_address, value, broadcast=True, type_of_transaction='money'):
+    def create_transaction(self, receiver_id, receiver_address, value, broadcast=True, type_of_transaction='money', is_first = False):
         my_transaction = transaction.Transaction(
             self.id,
             receiver_id,
@@ -137,7 +136,7 @@ class Node:
             value,
             type_of_transaction, 
             self.nonces[self.id],
-            )
+            is_first)
         #remember to broadcast it
         #self.nonces[self.id] += 1
         if broadcast:
@@ -151,7 +150,7 @@ class Node:
         verification = verifier.verify(hash, signature)
         return verification
 
-    def validate_transaction(self, transaction:transaction.Transaction):
+    def validate_transaction(self, transaction:transaction.Transaction, update_balance=False):
         if transaction.type_of_transaction == 'money':
             required_money = transaction.amount*(1+fee)
         elif transaction.type_of_transaction == 'string':
@@ -171,9 +170,16 @@ class Node:
         #allazei to nohma
         if combo:
             print(f"Node {self.id} validates transaction from {sender_id} to {receiver_id} with content: {transaction.value}.") 
-            self.balances[sender_id] -= required_money
-            self.balances[receiver_id] += transaction.amount
-            self.nonces[sender_id] += 1
+            if not update_balance and transaction.is_first:   # This will be called only once when the node receives the initial money
+                print(f"It also updates the balance ;)")
+                self.balances[sender_id] -= required_money
+                self.balances[receiver_id] += transaction.amount
+                self.nonces[sender_id] += 1
+            if update_balance and not transaction.is_first:
+                print(f"It also updates the balance ;)")
+                self.balances[sender_id] -= required_money
+                self.balances[receiver_id] += transaction.amount
+                self.nonces[sender_id] += 1
             self.transactions.append(transaction)
             if len(self.transactions) >= capacity:
                 self.mine_block()
@@ -225,6 +231,8 @@ class Node:
     #consensus functions
 
     def validate_block(self, block:block.Block):
+        current_balance = self.balances.copy()
+
         last_block = self.blockchain[-1]
         previous_hash = last_block.hash
         validator = self.POS(previous_hash)
@@ -232,24 +240,25 @@ class Node:
         validator_correct = (validator == block.validator)
         hash_correct = (previous_hash == block.previous_hash)
 
-        block_correct = validator_correct and hash_correct
+        trans_validated = True
+        if hash_correct and validator_correct:
+            for t in block.list_of_transactions:
+                trans_validated = trans_validated and self.validate_transaction(t, True)
+
+        block_correct = validator_correct and hash_correct and trans_validated
         if block_correct:
             print(f"Block {block.index} with validator {block.validator} is checked by node {self.id}.")
             self.blockchain.append(block)
             for t in block.list_of_transactions:
-                if transaction.type_of_transaction == 'money':
-                    required_money = transaction.amount*(1+fee)
-                elif transaction.type_of_transaction == 'string':
-                    required_money = transaction.amount
-                self.hard_balances[transaction.sender_id] -= required_money
-                self.hard_balances[transaction.receiver_id] += transaction.amount
                 if t.type_of_transaction == 'money':
-                    self.hard_balances[validator] += fee*t.amount
+                    self.balances[validator] += fee*t.amount
                 elif t.type_of_transaction == 'string':
-                    self.hard_balances[validator] += t.amount
-                self.transactions = []
-                self.balances = self.hard_balances.copy()
+                    self.balances[validator] += t.amount
+                for t2 in self.transactions: #remove the transactions which are in the incoming block
+                    if t2.hash == t.hash:
+                        self.transactions.remove(t2)
         else:
+            self.balances = current_balance.copy()  # if block is not validated, undo all balance changes
             print(f"Block {block.index} is NOT validated by node {self.id}.")
 
         return block_correct
@@ -301,7 +310,7 @@ class Node:
             self.register_node(Node.node_id, ip, port, address)
             print(f"Bootstrap received info from node with ip {ip} and gives to the node the id {Node.node_id}")
             threading.Thread(target=self.send_info_to_nodes((ip, port), Node.node_id))
-            self.create_transaction(Node.node_id, address, 1000)
+            self.create_transaction(Node.node_id, address, 1000, is_first=True)
             if Node.node_id == self.n-1:
                 self.broadcast_ring()
 
