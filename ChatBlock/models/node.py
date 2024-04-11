@@ -244,11 +244,11 @@ class Node:
             self.blockchain.append(block)
             for t in block.list_of_transactions:
                 if t.type_of_transaction == 'money':
+                    self.hard_balances[t.receiver_id] += t.amount
                     required_money = t.amount*(1+fee)
                 elif t.type_of_transaction == 'string':
                     required_money = t.amount
                 self.hard_balances[t.sender_id] -= required_money
-                self.hard_balances[t.receiver_id] += t.amount
                 if t.type_of_transaction == 'money':
                     self.hard_balances[validator] += fee*t.amount
                 elif t.type_of_transaction == 'string':
