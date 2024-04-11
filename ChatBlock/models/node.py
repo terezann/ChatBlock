@@ -453,7 +453,7 @@ def process_transactions(node, num):
         with open(filename, "r") as file:
             l = 0
             for line in file:
-                if l==30:
+                if l==100:
                     break
                 parts = line.strip().split(" ", 1)
                 if len(parts) == 2:
@@ -462,7 +462,7 @@ def process_transactions(node, num):
                     receiver_address = node.ring[receiver_id]['address']
                     node.create_transaction(receiver_id, receiver_address, message, True, 'string')
                 l += 1
-                time.sleep(0.5)
+                time.sleep(1)
     except FileNotFoundError:
         print(f"File {filename} not found.")
     except Exception as e:
