@@ -34,7 +34,7 @@ class Node:
         #ring: here we store info for every node, as its id, its address (ip:port), its public  key and its balance
         self.ring = []
         self.transactions = []
-        self.stakes = [1] + [0]*(n-1)
+        self.stakes = [0]*n
         self.balances = [0]*n
         self.hard_balances = [0]*n
         self.nonces = [0]*n
@@ -329,6 +329,7 @@ class Node:
             self.stakes = received_object[2]
             self.balances = received_object[3]
             self.nonces = received_object[4]
+            self.transactions = received_object[5]
 
         elif message_type == 'transaction':
             self.validate_transaction(received_object)
@@ -432,7 +433,7 @@ class Node:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect(node_address)
-                serialized_id = pickle.dumps(('node_id, bootstrap_blockchain', (id, self.blockchain, self.stakes, self.balances, self.nonces)))
+                serialized_id = pickle.dumps(('node_id, bootstrap_blockchain', (id, self.blockchain, self.stakes, self.balances, self.nonces, self.transactions)))
                 sock.sendall(serialized_id)
         except ConnectionResetError:
             print("Socket Closed by the other end")
