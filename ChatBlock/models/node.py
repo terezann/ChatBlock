@@ -87,6 +87,7 @@ class Node:
         index = last_block.index + 1
         validator = self.POS(seed)
         if (validator == self.id):
+            print(f"Node {self.id} is the validator of block {index}.")
             myblock = block.Block(index, validator, previous_hash, self.transactions[:capacity].copy())
             self.broadcast_block(myblock)
 

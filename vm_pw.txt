@@ -1,0 +1,23 @@
+pLRBi6RqMU
+VM1
+
+Fuclo2irNV
+VM2
+
+9H0l0ixVRW
+VM3
+
+zvOuWZiB8B
+VM4
+
+0oKpcDxm7J
+VM5
+
+192.168.0.3 node0
+192.168.0.2 node1
+192.168.0.1 node2
+192.168.0.5 node3
+192.168.0.4 node4
+
+node0 public: 
+83.212.80.198
