@@ -314,7 +314,7 @@ class Node:
             self.nonces = received_object[4]
 
         elif message_type == 'transaction':
-            self.validate_transaction(received_object, False)
+            self.validate_transaction(received_object)
 
         elif message_type == 'block':
             print(f"Node {self.id} received block: {received_object.index}.")
