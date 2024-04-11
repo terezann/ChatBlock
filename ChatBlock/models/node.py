@@ -252,6 +252,8 @@ class Node:
                     self.hard_balances[validator] += fee*t.amount
                 elif t.type_of_transaction == 'string':
                     self.hard_balances[validator] += t.amount
+                print("Current transaction value:", t.value)
+                print(self.hard_balances)
             self.balances = self.hard_balances.copy()
 
             '''
