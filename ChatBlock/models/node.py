@@ -251,6 +251,8 @@ class Node:
                 self.balances = self.hard_balances.copy()
         else:
             print(f"Block {block.index} is NOT validated by node {self.id}.")
+            print(f"Validator: {validator}, Block Validator: {block.validator}.")
+            print(f"Previous Hash: {previous_hash}, Block Previous Hash: {block.previous_hash}")
 
         return block_correct
     
