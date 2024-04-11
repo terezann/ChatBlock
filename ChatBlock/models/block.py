@@ -6,7 +6,7 @@ import datetime as date
 from collections import OrderedDict
 from Crypto.Hash import SHA
 
-capacity = 5
+capacity = 10
 
 class Block:
     def __init__(self, index, validator, previous_hash, transactions, hash=None):
