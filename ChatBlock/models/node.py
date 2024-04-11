@@ -252,14 +252,14 @@ class Node:
                     self.hard_balances[validator] += fee*t.amount
                 elif t.type_of_transaction == 'string':
                     self.hard_balances[validator] += t.amount
-                self.balances = self.hard_balances.copy()
+            self.balances = self.hard_balances.copy()
 
-                '''
-                for t2 in self.transactions:    # remove transactions that are already in the blockchain
-                    if t.hash == t2.hash:
-                        self.transactions.remove(t2)
-                '''
-                self.transactions = []
+            '''
+            for t2 in self.transactions:    # remove transactions that are already in the blockchain
+                if t.hash == t2.hash:
+                    self.transactions.remove(t2)
+            '''
+            self.transactions = []
         else:
             print(f"Block {block.index} is NOT validated by node {self.id}.")
             print(f"Validator: {validator}, Block Validator: {block.validator}.")
