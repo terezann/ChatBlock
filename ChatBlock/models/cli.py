@@ -1,31 +1,28 @@
-"""
-	intelliQ Command Line Interface
-	Basic implementation of the CLI application as described in the req. specification of intelliQ
-	Usage: Setup virtual environment and run se2226
-	Made with the @click package
-"""
-
 import os
 import click
 import re
 import pickle
 import node
+import block
 
 FILEPATH = './mynode'
-boot_ip = TO BE COMPLETED
+boot_ip = '192.168.0.3'
 boot_port = 5000
 
 
 @click.group()
 @click.option('--reboot', type=bool, default=False, help='Overwrite node')
 @click.option('--is_boot', type=bool, default=False, help='Whether the node is bootstrap or not.')
+@click.option('--node_ip', default='192.168.0.2', help='Ip address of each node.')
 @click.option('--n', type=int, default=5, help='Number of nodes in the network.')
-def main(reboot, is_boot, n):
+@click.option('--capacity', type=int, default=5, help='Capacity of each block.')
+def main(reboot, is_boot, node_ip, n, capacity):
     '''ChatBlock command interface \n
        You need to give is_boot and n options for initialization '''
-    bootstrap_address = (boot_ip, boot_port)
-    mynode = node.Node('localhost', 5000, bootstrap_address, is_boot, n)
     if reboot or not os.path.exists(FILEPATH):
+        block.capacity = capacity 
+        bootstrap_address = (boot_ip, boot_port)
+        mynode = node.Node(node_ip, 5000, bootstrap_address, is_boot, n)
         with open(FILEPATH, 'wb') as file:
             pickle.dump(mynode, file)
         click.echo("Node initialized.")
