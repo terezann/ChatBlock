@@ -218,8 +218,8 @@ class Node:
         #myblock = block.Block(index, validator, previous_hash, self.transactions.copy())
         genesis_block = block.Block(0, 0, 1, [self.create_transaction(-1, 0, 1000*n, broadcast=False)])
         self.balances[0] = 1000*n
-        self.blockchain.append(genesis_block)
-        self.validate_chain(self.blockchain)
+        myblockchain = [genesis_block]
+        self.validate_chain(myblockchain)
         print("Genesis block is created!")
                     
 
