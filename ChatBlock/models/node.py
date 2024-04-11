@@ -435,13 +435,18 @@ class Node:
             print(f"Error sending info to node at {node_address}: {e}")
 
 def process_transactions(node, num):
+    time.sleep(0.5)
+    node.stake(10)
+    time.sleep(0.5)
     print(f"Balances: {node.balances}")
+    start_time = time.time()
+    print("Starting timestamp: ", start_time)
     filename = f"./trans{node.id}.txt"
     try:
         with open(filename, "r") as file:
             l = 0
             for line in file:
-                if l==1:
+                if l==5:
                     break
                 parts = line.strip().split(" ", 1)
                 if len(parts) == 2:
@@ -455,6 +460,11 @@ def process_transactions(node, num):
     except Exception as e:
         print(f"Error reading file {filename}: {e}")
 
+    end_time = time.time()
+    print("Ending timestamp: ", end_time)
+    print("Elapsed time: ", end_time - start_time)
+    print("Time per transaction: ", (end_time - start_time)/5)
+
 if __name__ == "__main__":
     bootstrap_address = ('192.168.0.3', 5000) ##83.212.80.198
     # Check if a specific argument is provided
@@ -463,8 +473,8 @@ if __name__ == "__main__":
         bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
         while bootstrap_node.node_ready == False:
             time.sleep(0.0001)
-        time.sleep(5)
         process_transactions(bootstrap_node, sys.argv[2])
+        time.sleep(5)
         print("--------------------------------------------------------")
         print(f"Balances: {bootstrap_node.balances}")
         print(f"Stakes: {bootstrap_node.stakes}")
@@ -474,8 +484,8 @@ if __name__ == "__main__":
         node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
         while node.node_ready == False:
             time.sleep(0.0001)
-        time.sleep(5)
         process_transactions(node, sys.argv[2])
+        time.sleep(5)
         print("--------------------------------------------------------")
         print(f"Balances: {node.balances}")
         print(f"Stakes: {node.stakes}")
