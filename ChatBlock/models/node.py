@@ -271,6 +271,7 @@ class Node:
     
 
     def validate_chain(self, chain):
+        self.balances[0] = 1000*self.n  # since genesis is not validated, we have to add the initial balance to the bootstrap
         self.blockchain.append(chain[0])  # add genesis block to blockchain
         for block in chain[1:]:
             if self.validate_block(block) == False:
