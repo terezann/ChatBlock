@@ -168,7 +168,7 @@ class Node:
         sender_balance = self.balances[sender_id]
         enough_money = (sender_balance - required_money) >= 0
         #check nonce
-        noncesOk = self.nonces[sender_id] == transaction.nonce
+        noncesOk = (self.nonces[sender_id] == transaction.nonce or self.id == sender_id)
         combo = isVerify and enough_money and noncesOk
         #allazei to nohma
         if combo:
