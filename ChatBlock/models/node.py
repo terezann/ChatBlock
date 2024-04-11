@@ -186,6 +186,8 @@ class Node:
         else: 
             print(f"Node {self.id} does NOT validate transaction from {sender_id} to {receiver_id} with content: {transaction.value}.")
             print(f"Problem: nonces-> {noncesOk}, verify-> {isVerify}, enough_money-> {enough_money}.")
+            print(f"Sender node's {sender_id} nonce: {self.nonces[sender_id]}.")
+            print(f"Transaction nonce {transaction.nonce}.")
 
         return combo
     
