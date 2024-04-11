@@ -462,6 +462,7 @@ def process_transactions(node, num):
                     receiver_address = node.ring[receiver_id]['address']
                     node.create_transaction(receiver_id, receiver_address, message, True, 'string')
                 l += 1
+                time.sleep(0.01)
     except FileNotFoundError:
         print(f"File {filename} not found.")
     except Exception as e:
