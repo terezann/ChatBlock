@@ -227,6 +227,9 @@ class Node:
 
     def validate_block(self, block:block.Block):
         last_block = self.blockchain[-1]
+        if last_block.index >= block.index:
+            print(f"Node {self.id} has already received block {block.index}.")
+            return
         previous_hash = last_block.hash
         validator = self.POS(previous_hash)
 
@@ -248,8 +251,14 @@ class Node:
                     self.hard_balances[validator] += fee*t.amount
                 elif t.type_of_transaction == 'string':
                     self.hard_balances[validator] += t.amount
-                self.transactions = []
                 self.balances = self.hard_balances.copy()
+
+                '''
+                for t2 in self.transactions:    # remove transactions that are already in the blockchain
+                    if t.hash == t2.hash:
+                        self.transactions.remove(t2)
+                '''
+                self.transactions = []
         else:
             print(f"Block {block.index} is NOT validated by node {self.id}.")
             print(f"Validator: {validator}, Block Validator: {block.validator}.")
