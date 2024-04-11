@@ -21,6 +21,7 @@ def main(reboot, is_boot, node_ip, n, capacity):
        You need to give is_boot and n options for initialization '''
     print(os.path.exists(FILEPATH))
     if reboot or not os.path.exists(FILEPATH):
+        print("Rebooting")
         block.capacity = capacity 
         bootstrap_address = (boot_ip, boot_port)
         mynode = node.Node(node_ip, 5000, bootstrap_address, is_boot, n)
