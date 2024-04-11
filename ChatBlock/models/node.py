@@ -446,11 +446,11 @@ def process_transactions(node, num):
         print(f"Error reading file {filename}: {e}")
 
 if __name__ == "__main__":
-    bootstrap_address = ('83.212.80.198', 5000)
+    bootstrap_address = ('192.268.0.3', 5000) ##83.212.80.198
     # Check if a specific argument is provided
     if len(sys.argv) > 1 and sys.argv[1] == "bootstrap":
         # Run this block if "bootstrap" argument is provided
-        bootstrap_node = Node('83.212.80.198', 5000, bootstrap_address, is_boot=True, n=5)
+        bootstrap_node = Node('192.268.0.3', 5000, bootstrap_address, is_boot=True, n=5)
         while bootstrap_node.node_ready == False:
             time.sleep(0.0001)
         time.sleep(5)
