@@ -468,8 +468,9 @@ class Node:
 
 def process_transactions(node):
     time.sleep(0.5)
-    if node.id == 1: node.stake(100)
-    else: node.stake(10)
+    #if node.id == 1: node.stake(100)
+    #else: node.stake(10)
+    node.stake(10)
     time.sleep(0.5)
     print(f"Balances: {node.balances}")
     start_time = time.time()
