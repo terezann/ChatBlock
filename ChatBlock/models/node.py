@@ -482,7 +482,7 @@ if __name__ == "__main__":
         port = sys.argv[2]
         if sys.argv[1] == "bootstrap": is_boot = True 
         else:
-            ip = sys.argv[1] 
+            ip = f'{sys.argv[1]}' 
             is_boot = False
         
         bootstrap_address = ('192.168.0.3', 5000) ##83.212.80.198
@@ -500,6 +500,7 @@ if __name__ == "__main__":
             print(f"Blockchain Length: {len(bootstrap_node.blockchain)}")
         else:
             # Run this block if "bootstrap" argument is not provided
+            print(type(ip), type(port))
             node = Node(ip, port, bootstrap_address, capacity, is_boot=False, n=5)
             while node.node_ready == False:
                 time.sleep(0.0001)
