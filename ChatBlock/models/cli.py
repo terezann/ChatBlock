@@ -4,6 +4,8 @@ import re
 import pickle
 import node
 import block
+import threading
+import time
 
 FILEPATH = './mynode'
 boot_ip = '192.168.0.3'
@@ -27,7 +29,14 @@ def main(reboot, is_boot, node_ip, n, capacity):
         with open(FILEPATH, 'wb') as file:
             pickle.dump(mynode, file)
         click.echo("Node initialized.")
+    else:
+        mynode:node.Node  = get_node_info()
+    threading.Thread(target=save_data, args=(mynode,)).start()
 
+def save_data(node):
+    with open(FILEPATH, 'wb') as file:
+        time.sleep(0.1)
+        pickle.dump(node, file)
 def get_node_info():
     if os.path.exists(FILEPATH):
         with open(FILEPATH, 'rb') as file:
@@ -111,7 +120,6 @@ def balance():
     click.echo("Executing 'balance' command...")
     mynode:node.Node  = get_node_info()
     click.echo(f"The current balance is {mynode.balances[mynode.id]}")
-    return
 
 if __name__ == '__main__':
     main()
