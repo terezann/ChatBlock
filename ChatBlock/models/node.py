@@ -478,8 +478,8 @@ if __name__ == "__main__":
     # bootstrap args = [., bootstrap, port, capacity]
     # node args = [., ip, port, capacity]
     if len(sys.argv) == 4:
-        capacity = sys.argv[3]
-        port = sys.argv[2]
+        capacity = int(sys.argv[3])
+        port = int(sys.argv[2])
         if sys.argv[1] == "bootstrap": is_boot = True 
         else:
             ip = f'{sys.argv[1]}' 
