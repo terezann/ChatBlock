@@ -535,6 +535,8 @@ if __name__ == "__main__":
             print(f"Balances: {node.balances}")
             print(f"Stakes: {node.stakes}")
             print(f"Blockchain Length: {len(node.blockchain)}")
+    else:
+        print("You must give all 4 parameters")
 
 
     
