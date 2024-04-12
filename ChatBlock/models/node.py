@@ -198,7 +198,8 @@ class Node:
         if combo:
             print(f"Node {self.id} validates transaction from {sender_id} to {receiver_id} with content: {transaction.value}.") 
             self.balances[sender_id] -= required_money
-            self.balances[receiver_id] += transaction.amount
+            if transaction.type_of_transaction == 'money':
+                self.balances[receiver_id] += transaction.amount
             if self.id != sender_id: self.nonces[sender_id] += 1
             self.transactions.append(transaction)
             if len(self.transactions) >= self.capacity:
