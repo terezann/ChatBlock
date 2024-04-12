@@ -492,9 +492,11 @@ def process_transactions(node):
         print(f"Error reading file {filename}: {e}")
 
     end_time = time.time()
-    print("Ending timestamp: ", end_time)
-    print("Elapsed time: ", end_time - start_time)
-    print("Time per transaction: ", (end_time - start_time)/100)
+    elapsed_time = end_time - start_time - 100
+    n = node.n
+    blength = len(node.blockchain)
+    print(f"Transaction Throuhput: {(n*100)/elapsed_time}")
+    print(f"Block Throuhput: {(blength)/elapsed_time}")
 
 if __name__ == "__main__":
     # bootstrap args = [., bootstrap, port, capacity]
