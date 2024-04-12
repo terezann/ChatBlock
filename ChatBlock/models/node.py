@@ -17,12 +17,12 @@ from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 
-capacity = block.capacity
+#capacity = 10
 fee = 0.03
 
 class Node:
     node_id = 0
-    def __init__(self, ip, port, bootstrap_address, is_boot = False, n=1):
+    def __init__(self, ip, port, bootstrap_address, capacity, is_boot = False, n=1):
         self.n = n
         self.ip = ip
         self.port = port
@@ -31,6 +31,7 @@ class Node:
         self.is_boot = is_boot
         self.id = self.set_id()
         self.wallet = self.create_wallet()
+        self.capacity = capacity
         #ring: here we store info for every node, as its id, its address (ip:port), its public  key and its balance
         self.ring = []
         self.transactions = []
@@ -88,7 +89,7 @@ class Node:
         validator = self.POS(seed)
         if (validator == self.id):
             print(f"Node {self.id} is the validator of block {index}.")
-            myblock = block.Block(index, validator, previous_hash, self.transactions[:capacity].copy())
+            myblock = block.Block(index, validator, previous_hash, self.transactions[:self.capacity].copy())
             self.broadcast_block(myblock)
 
     def create_wallet(self):
@@ -177,7 +178,7 @@ class Node:
             self.balances[receiver_id] += transaction.amount
             if self.id != sender_id: self.nonces[sender_id] += 1
             self.transactions.append(transaction)
-            if len(self.transactions) >= capacity:
+            if len(self.transactions) >= self.capacity:
                 self.mine_block()
         else: 
             print(f"Node {self.id} does NOT validate transaction from {sender_id} to {receiver_id} with content: {transaction.value}.")
@@ -441,7 +442,7 @@ class Node:
         except Exception as e:
             print(f"Error sending info to node at {node_address}: {e}")
 
-def process_transactions(node, num):
+def process_transactions(node):
     time.sleep(0.5)
     node.stake(10)
     # if node.id == 1:
@@ -455,17 +456,13 @@ def process_transactions(node, num):
     filename = f"./trans{node.id}.txt"
     try:
         with open(filename, "r") as file:
-            l = 0
             for line in file:
-                if l==100:
-                    break
                 parts = line.strip().split(" ", 1)
                 if len(parts) == 2:
                     receiver_id = int(parts[0][2:])  # Extract the integer part after "id"
                     message = parts[1]  # Extract the string part after the integer
                     receiver_address = node.ring[receiver_id]['address']
                     node.create_transaction(receiver_id, receiver_address, message, True, 'string')
-                l += 1
                 time.sleep(1)
     except FileNotFoundError:
         print(f"File {filename} not found.")
@@ -478,30 +475,40 @@ def process_transactions(node, num):
     print("Time per transaction: ", (end_time - start_time)/100)
 
 if __name__ == "__main__":
-    bootstrap_address = ('192.168.0.3', 5000) ##83.212.80.198
-    # Check if a specific argument is provided
-    if len(sys.argv) > 1 and sys.argv[1] == "bootstrap":
-        # Run this block if "bootstrap" argument is provided
-        bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, is_boot=True, n=5)
-        while bootstrap_node.node_ready == False:
-            time.sleep(0.0001)
-        process_transactions(bootstrap_node, sys.argv[2])
-        time.sleep(5)
-        print("--------------------------------------------------------")
-        print(f"Balances: {bootstrap_node.balances}")
-        print(f"Stakes: {bootstrap_node.stakes}")
-        print(f"Blockchain Length: {len(bootstrap_node.blockchain)}")
-    else:
-        # Run this block if "bootstrap" argument is not provided
-        node = Node(sys.argv[1], 5000, bootstrap_address, is_boot=False, n=5)
-        while node.node_ready == False:
-            time.sleep(0.0001)
-        process_transactions(node, sys.argv[2])
-        time.sleep(5)
-        print("--------------------------------------------------------")
-        print(f"Balances: {node.balances}")
-        print(f"Stakes: {node.stakes}")
-        print(f"Blockchain Length: {len(node.blockchain)}")
+    # bootstrap args = [., bootstrap, port, capacity]
+    # node args = [., ip, port, capacity]
+    if len(sys.argv) == 4:
+        capacity = sys.argv[3]
+        port = sys.argv[2]
+        if sys.argv[1] == "bootstrap": is_boot = True 
+        else:
+            ip = sys.argv[1] 
+            is_boot = False
+        
+        bootstrap_address = ('192.168.0.3', 5000) ##83.212.80.198
+
+        if is_boot:
+            # Run this block if "bootstrap" argument is provided
+            bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, capacity, is_boot=True, n=5)
+            while bootstrap_node.node_ready == False:
+                time.sleep(0.0001)
+            process_transactions(bootstrap_node)
+            time.sleep(5)
+            print("--------------------------------------------------------")
+            print(f"Balances: {bootstrap_node.balances}")
+            print(f"Stakes: {bootstrap_node.stakes}")
+            print(f"Blockchain Length: {len(bootstrap_node.blockchain)}")
+        else:
+            # Run this block if "bootstrap" argument is not provided
+            node = Node(ip, port, bootstrap_address, capacity, is_boot=False, n=5)
+            while node.node_ready == False:
+                time.sleep(0.0001)
+            process_transactions(node)
+            time.sleep(5)
+            print("--------------------------------------------------------")
+            print(f"Balances: {node.balances}")
+            print(f"Stakes: {node.stakes}")
+            print(f"Blockchain Length: {len(node.blockchain)}")
 
 
     

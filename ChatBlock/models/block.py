@@ -6,7 +6,6 @@ import datetime as date
 from collections import OrderedDict
 from Crypto.Hash import SHA
 
-capacity = 10
 
 class Block:
     def __init__(self, index, validator, previous_hash, transactions, hash=None):
@@ -19,7 +18,7 @@ class Block:
         #self.listofTransactions
         self.list_of_transactions = transactions
         self.validator = validator
-        self.capacity = capacity
+        #self.capacity = capacity
         if hash == None:
             self.hash = self.myHash()
         else:
@@ -31,7 +30,7 @@ class Block:
             'index': self.index,
             'previous_hash': self.previous_hash,
             'validator': self.validator,
-            'capacity': self.capacity,
+            #'capacity': self.capacity,
             'list_of_transactions': self.list_of_transactions
             })
 
