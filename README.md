@@ -16,7 +16,7 @@ ChatBlock is a simple blockchain implementation in Python using the Flask web fr
 ### Prerequisites
 
 - Python 3.x
-- Flask (install via `pip install Flask`)
+- Pycryptodome (pip install pycryptodome)
 
 ### Installation
 
