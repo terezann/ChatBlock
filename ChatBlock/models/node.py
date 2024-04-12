@@ -499,10 +499,11 @@ def process_transactions(node):
     print(f"Block Throuhput: {(blength)/elapsed_time}")
 
 if __name__ == "__main__":
-    # bootstrap args = [., bootstrap, port, capacity]
-    # node args = [., ip, port, capacity]
-    if len(sys.argv) == 4:
+    # bootstrap args = [., bootstrap, port, capacity, n]
+    # node args = [., ip, port, capacity, n]
+    if len(sys.argv) == 5:
         capacity = int(sys.argv[3])
+        n = int(sys.argv[4])
         port = int(sys.argv[2])
         if sys.argv[1] == "bootstrap": is_boot = True 
         else:
@@ -513,7 +514,7 @@ if __name__ == "__main__":
 
         if is_boot:
             # Run this block if "bootstrap" argument is provided
-            bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, capacity, is_boot=True, n=5)
+            bootstrap_node = Node('192.168.0.3', 5000, bootstrap_address, capacity, is_boot=True, n=n)
             while bootstrap_node.node_ready == False:
                 time.sleep(0.0001)
             process_transactions(bootstrap_node)
@@ -525,7 +526,7 @@ if __name__ == "__main__":
         else:
             # Run this block if "bootstrap" argument is not provided
             #print(type(ip), type(port))
-            node = Node(ip, port, bootstrap_address, capacity, is_boot=False, n=5)
+            node = Node(ip, port, bootstrap_address, capacity, is_boot=False, n=n)
             while node.node_ready == False:
                 time.sleep(0.0001)
             process_transactions(node)
