@@ -19,7 +19,6 @@ boot_port = 5000
 def main(reboot, is_boot, node_ip, n, capacity):
     '''ChatBlock command interface \n
        You need to give is_boot and n options for initialization '''
-    print(os.path.exists(FILEPATH))
     if reboot or not os.path.exists(FILEPATH):
         print("Rebooting")
         block.capacity = capacity 

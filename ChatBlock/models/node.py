@@ -38,6 +38,7 @@ class Node:
             self.id = node_info[1]
             self.wallet = node_info[2]
             self.ring = node_info[3]
+            print("RINGG", self.ring)
             self.transactions = node_info[4]
             self.stakes = node_info[5]
             self.balances = node_info[6]
