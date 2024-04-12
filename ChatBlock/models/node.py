@@ -22,16 +22,33 @@ fee = 0.03
 
 class Node:
     node_id = 0
-    def __init__(self, ip, port, bootstrap_address, capacity, is_boot = False, n=1):
+    def __init__(self, ip, port, bootstrap_address, capacity, is_boot = False, n=1, is_initialized = False, node_info = None):
         self.n = n
         self.ip = ip
         self.port = port
         self.bootstrap_address = bootstrap_address
-        self.blockchain=[]
         self.is_boot = is_boot
+        self.capacity = capacity
+
+        if is_initialized:
+            if node_info == None:
+                print("Error loading node data")
+                return
+            self.blockchain = node_info[0]
+            self.id = node_info[1]
+            self.wallet = node_info[2]
+            self.ring = node_info[3]
+            self.transactions = node_info[4]
+            self.stakes = node_info[5]
+            self.balances = node_info[6]
+            self.hard_balances = node_info[7]
+            self.nonces = node_info[8]
+            self.node_ready = node_info[9]
+            return
+
+        self.blockchain=[]
         self.id = self.set_id()
         self.wallet = self.create_wallet()
-        self.capacity = capacity
         #ring: here we store info for every node, as its id, its address (ip:port), its public  key and its balance
         self.ring = []
         self.transactions = []
@@ -40,6 +57,7 @@ class Node:
         self.hard_balances = [0]*n
         self.nonces = [0]*n
         self.node_ready = False
+
         print(f"Node with ip {self.ip} generated")
         
         threading.Thread(target=self.start_listener).start()
@@ -52,7 +70,10 @@ class Node:
             self.create_genesis_block(n)
 
     def __reduce__(self):
-        return (self.__class__, (self.ip, self.port, self.bootstrap_address, self.is_boot, self.n))
+        return (self.__class__, (self.ip, self.port, self.bootstrap_address, self.capacity, self.is_boot, self.n, True, \
+                                 [self.blockchain, self.id, self.wallet, self.ring, self.transactions, self.stakes,     \
+                                  self.balances, self.hard_balances, self.nonces, self.node_ready]))
+
 
     def set_id(self):
         if self.is_boot:
@@ -500,7 +521,7 @@ if __name__ == "__main__":
             print(f"Blockchain Length: {len(bootstrap_node.blockchain)}")
         else:
             # Run this block if "bootstrap" argument is not provided
-            print(type(ip), type(port))
+            #print(type(ip), type(port))
             node = Node(ip, port, bootstrap_address, capacity, is_boot=False, n=5)
             while node.node_ready == False:
                 time.sleep(0.0001)
