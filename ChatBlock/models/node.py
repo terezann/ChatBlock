@@ -501,6 +501,7 @@ def process_transactions(node):
 if __name__ == "__main__":
     # bootstrap args = [., bootstrap, port, capacity, n]
     # node args = [., ip, port, capacity, n]
+    print(sys.argv)
     if len(sys.argv) == 5:
         capacity = int(sys.argv[3])
         n = int(sys.argv[4])
