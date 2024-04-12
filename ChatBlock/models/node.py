@@ -88,6 +88,7 @@ class Node:
                 lottery_players.append(player)
         ###lottery_sum = self.stakes.sum()
         lottery_sum = sum(self.stakes)
+        if lottery_sum == 0: return 0
         random.seed(seed)
         winner = random.randint(0, lottery_sum-1)
         validator = lottery_players[winner]
